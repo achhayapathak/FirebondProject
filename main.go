@@ -1,13 +1,43 @@
 package main
 
 import (
+	"encoding/json"
     "fmt"
     "github.com/go-resty/resty/v2"
 )
 
-func main() {
-    apiKey := "eeaef8a22a3a7f5998cbd83ecc2fed292698ed28d7adc154738957c8d269a81d"
-    fetchExchangeRates(apiKey)
+type ExchangeRateResponse struct {
+	BTC ExchangeRate `json:"BTC"`
+	ETH ExchangeRate `json:"ETH"`
+	LTC ExchangeRate `json:"LTC"`
+}
+
+type ExchangeRate struct {
+	USD float64 `json:"USD"`
+	EUR float64 `json:"EUR"`
+	GBP float64 `json:"GBP"`
+}
+
+
+func processExchangeRates(responseBody string) {
+	var exchangeRateResponse ExchangeRateResponse
+	err := json.Unmarshal([]byte(responseBody), &exchangeRateResponse)
+	if err != nil {
+		fmt.Printf("Error parsing API response: %s\n", err.Error())
+		return
+	}
+
+	// Display the exchange rate data
+	fmt.Println("Exchange Rates:")
+	fmt.Printf("BTC to USD: %.2f\n", exchangeRateResponse.BTC.USD)
+	fmt.Printf("BTC to EUR: %.2f\n", exchangeRateResponse.BTC.EUR)
+	fmt.Printf("BTC to GBP: %.2f\n", exchangeRateResponse.BTC.GBP)
+	fmt.Printf("ETH to USD: %.2f\n", exchangeRateResponse.ETH.USD)
+	fmt.Printf("ETH to EUR: %.2f\n", exchangeRateResponse.ETH.EUR)
+	fmt.Printf("ETH to GBP: %.2f\n", exchangeRateResponse.ETH.GBP)
+	fmt.Printf("LTC to USD: %.2f\n", exchangeRateResponse.LTC.USD)
+	fmt.Printf("LTC to EUR: %.2f\n", exchangeRateResponse.LTC.EUR)
+	fmt.Printf("LTC to GBP: %.2f\n", exchangeRateResponse.LTC.GBP)
 }
 
 
@@ -29,11 +59,18 @@ func fetchExchangeRates(apiKey string) {
 
     // Check the response status code
     if response.StatusCode() == 200 {
+        // Parse and process the response here
         fmt.Println("Exchange rates fetched successfully!")
         fmt.Println("Response Body:", response.String())
-        // Parse and process the response here
+		processExchangeRates(response.String())
+
     } else {
-        fmt.Printf("API request failed with status code: %d\n", response.StatusCode())
         // Handle the error scenario here
+        fmt.Printf("API request failed with status code: %d\n", response.StatusCode())
     }
+}
+
+func main() {
+	apiKey := "eeaef8a22a3a7f5998cbd83ecc2fed292698ed28d7adc154738957c8d269a81d"
+	fetchExchangeRates(apiKey)
 }
