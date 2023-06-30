@@ -16,9 +16,7 @@ import (
 
 
 	"github.com/ethereum/go-ethereum/common"
-	// "github.com/gin-gonic/gin"
 	"github.com/ethereum/go-ethereum/ethclient"
-	// "github.com/ethereum/go-ethereum"
 )
 
 type ExchangeRateResponse struct {

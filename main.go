@@ -6,8 +6,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"time"
 	"net/http"
+	"time"
 
 	"github.com/go-resty/resty/v2"
 	"go.mongodb.org/mongo-driver/bson"
@@ -258,7 +258,7 @@ func main() {
 	}
 	defer client.Disconnect(context.TODO())
 
-	// deleteAllRecords(client)
+	deleteAllRecords(client)
 
 	fetchExchangeRates(apiKey, client)
 
@@ -266,11 +266,11 @@ func main() {
 
 	r := router.SetupRouter()
 
-	log.Println("Server started on http://localhost:4000")
+	log.Println("Server started")
 
 	// Start the server in a separate goroutine
 	go func() {
-		log.Fatal(http.ListenAndServe(":4000", r))
+		log.Fatal(http.ListenAndServe(":80", r))
 	}()
 
 	duration := 5 * time.Minute // Update interval of 5 minutes
