@@ -4,6 +4,7 @@ import (
 	"encoding/json"
     "fmt"
     "github.com/go-resty/resty/v2"
+	"time"
 )
 
 type ExchangeRateResponse struct {
@@ -38,6 +39,7 @@ func processExchangeRates(responseBody string) {
 	fmt.Printf("LTC to USD: %.2f\n", exchangeRateResponse.LTC.USD)
 	fmt.Printf("LTC to EUR: %.2f\n", exchangeRateResponse.LTC.EUR)
 	fmt.Printf("LTC to GBP: %.2f\n", exchangeRateResponse.LTC.GBP)
+	fmt.Println("-----------------------------------")
 }
 
 
@@ -61,7 +63,7 @@ func fetchExchangeRates(apiKey string) {
     if response.StatusCode() == 200 {
         // Parse and process the response here
         fmt.Println("Exchange rates fetched successfully!")
-        fmt.Println("Response Body:", response.String())
+        // fmt.Println("Response Body:", response.String())
 		processExchangeRates(response.String())
 
     } else {
@@ -73,4 +75,23 @@ func fetchExchangeRates(apiKey string) {
 func main() {
 	apiKey := "eeaef8a22a3a7f5998cbd83ecc2fed292698ed28d7adc154738957c8d269a81d"
 	fetchExchangeRates(apiKey)
+
+	duration := 5 * time.Minute // Update interval of 5 minutes
+
+	// Start the initial data fetch
+	fetchExchangeRates(apiKey)
+
+	// Set up a ticker to trigger updates at specified intervals
+	ticker := time.NewTicker(duration)
+	defer ticker.Stop()
+
+	// Run the update process in a separate goroutine
+	go func() {
+		for range ticker.C {
+			fetchExchangeRates(apiKey)
+		}
+	}()
+
+	// Keep the main goroutine running
+	select {}
 }
