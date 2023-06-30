@@ -258,7 +258,7 @@ func main() {
 	}
 	defer client.Disconnect(context.TODO())
 
-	deleteAllRecords(client)
+	// deleteAllRecords(client)
 
 	fetchExchangeRates(apiKey, client)
 
@@ -267,7 +267,7 @@ func main() {
 	r := router.SetupRouter()
 
 	log.Println("Server started on http://localhost:4000")
-	
+
 	// Start the server in a separate goroutine
 	go func() {
 		log.Fatal(http.ListenAndServe(":4000", r))

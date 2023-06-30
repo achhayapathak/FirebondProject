@@ -13,6 +13,12 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+
+
+	"github.com/ethereum/go-ethereum/common"
+	// "github.com/gin-gonic/gin"
+	"github.com/ethereum/go-ethereum/ethclient"
+	// "github.com/ethereum/go-ethereum"
 )
 
 type ExchangeRateResponse struct {
@@ -303,6 +309,43 @@ func handleGetExchangeRateHistory(w http.ResponseWriter, r *http.Request) {
 
 
 
+func GetAddressBalance(address string) (string, error) {
+	client, err := ethclient.Dial("https://mainnet.infura.io/v3/b1dadae5820b42779880f74796d5b1c2")
+	if err != nil {
+	  return "", err
+	}
+  
+	account := common.HexToAddress(address)
+	balance, err := client.BalanceAt(context.Background(), account, nil)
+	if err != nil {
+	  return "", err
+	}
+  
+	return balance.String(), nil
+  }
+  
+
+
+
+func GetBalanceHandler(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	address := params["address"]
+  
+	balance, err := GetAddressBalance(address)
+	if err != nil {
+	  log.Println(err)
+	  http.Error(w, "Failed to retrieve balance", http.StatusInternalServerError)
+	  return
+	}
+  
+	fmt.Fprintf(w, "Balance of address %s: %s", address, balance)
+  }
+  
+
+
+
+
+
 func SetupRouter() *mux.Router {
 	r := mux.NewRouter()
 
@@ -310,6 +353,8 @@ func SetupRouter() *mux.Router {
 	r.HandleFunc("/rates/{cryptocurrency}", handleGetExchangeRatesByCryptocurrency).Methods("GET")
 	r.HandleFunc("/rates", handleGetExchangeRates).Methods("GET")
 	r.HandleFunc("/rates/history/{cryptocurrency}/{fiat}", handleGetExchangeRateHistory).Methods("GET")
+
+	r.HandleFunc("/balance/{address}", GetBalanceHandler).Methods("GET")
 
 	return r
 }
