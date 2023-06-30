@@ -6,8 +6,8 @@ This repository contains the code for the Backend Developer Assignment of the Fi
 
 - [Minimum Requirements](#minimum-requirements)
 - [Installation and Setup](#installation-and-setup)
-- [API Endpoints](#api-endpoints)
 - [Deployment](#deployment)
+- [API Endpoints](#api-endpoints)
 
 ## Minimum Requirements
 
