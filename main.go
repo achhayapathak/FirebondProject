@@ -16,6 +16,50 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+func main() {
+	apiKey := "eeaef8a22a3a7f5998cbd83ecc2fed292698ed28d7adc154738957c8d269a81d"
+
+	// Connect to MongoDB
+	client, err := connectMongoDB()
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer client.Disconnect(context.TODO())
+
+	deleteAllRecords(client)
+
+	fetchExchangeRates(apiKey, client)
+
+	retrieveExchangeRatesFromDB(client)
+
+	router := router.SetupRouter()
+
+	log.Println("Server started")
+
+	// Start the server in a separate goroutine
+	go func() {
+		log.Fatal(http.ListenAndServe(":8080", router))
+	}()
+
+	duration := 5 * time.Minute // Update interval of 5 minutes
+
+	// Set up a ticker to trigger updates at specified intervals
+	ticker := time.NewTicker(duration)
+	defer ticker.Stop()
+
+	// Run the update process in a separate goroutine
+	go func() {
+		for range ticker.C {
+			fetchExchangeRates(apiKey, client)
+		}
+	}()
+
+	// Keep the main goroutine running
+	select {}
+
+}
+
+
 type ExchangeRateResponse struct {
 	BTC ExchangeRate `json:"BTC"`
 	ETH ExchangeRate `json:"ETH"`
@@ -248,45 +292,4 @@ func deleteAllRecords(client *mongo.Client) {
 	fmt.Printf("Deleted %d documents\n", result.DeletedCount)
 }
 
-func main() {
-	apiKey := "eeaef8a22a3a7f5998cbd83ecc2fed292698ed28d7adc154738957c8d269a81d"
 
-	// Connect to MongoDB
-	client, err := connectMongoDB()
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer client.Disconnect(context.TODO())
-
-	deleteAllRecords(client)
-
-	fetchExchangeRates(apiKey, client)
-
-	retrieveExchangeRatesFromDB(client)
-
-	r := router.SetupRouter()
-
-	log.Println("Server started")
-
-	// Start the server in a separate goroutine
-	go func() {
-		log.Fatal(http.ListenAndServe(":80", r))
-	}()
-
-	duration := 5 * time.Minute // Update interval of 5 minutes
-
-	// Set up a ticker to trigger updates at specified intervals
-	ticker := time.NewTicker(duration)
-	defer ticker.Stop()
-
-	// Run the update process in a separate goroutine
-	go func() {
-		for range ticker.C {
-			fetchExchangeRates(apiKey, client)
-		}
-	}()
-
-	// Keep the main goroutine running
-	select {}
-
-}
