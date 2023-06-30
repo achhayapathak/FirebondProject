@@ -10,6 +10,7 @@ import (
 	"github.com/go-resty/resty/v2"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 
 )
@@ -189,6 +190,68 @@ func fetchExchangeRates(apiKey string, client *mongo.Client) {
 	}
 }
 
+
+func retrieveExchangeRatesFromDB(client *mongo.Client) {
+	// Access the MongoDB collection
+	collection := client.Database("Currency_Exchange").Collection("exchange_rates")
+
+	// Define a filter to retrieve all documents
+	filter := bson.M{}
+
+	// Execute the find operation
+	cursor, err := collection.Find(context.TODO(), filter)
+	if err != nil {
+		log.Printf("Error retrieving exchange rates from the database: %s\n", err.Error())
+		return
+	}
+	defer cursor.Close(context.TODO())
+
+	// Iterate over the result cursor
+	for cursor.Next(context.TODO()) {
+		// Define a variable to store each document
+		var exchangeRate ExchangeRateDB
+
+		// Decode the document into the exchangeRate variable
+		if err := cursor.Decode(&exchangeRate); err != nil {
+			log.Printf("Error decoding exchange rate document: %s\n", err.Error())
+			continue
+		}
+
+		// Display the exchange rate data
+		fmt.Println("Exchange Rate:")
+		fmt.Printf("Cryptocurrency: %s\n", exchangeRate.Cryptocurrency)
+		fmt.Printf("Fiat Currency: %s\n", exchangeRate.FiatCurrency)
+		fmt.Printf("Rate: %.2f\n", exchangeRate.Rate)
+		fmt.Printf("Timestamp: %s\n", exchangeRate.Timestamp.String())
+		fmt.Println("-----------------------------------")
+	}
+
+	// Check if any errors occurred during iteration
+	if err := cursor.Err(); err != nil {
+		log.Printf("Error iterating over exchange rate documents: %s\n", err.Error())
+		return
+	}
+}
+
+func deleteAllRecords(client *mongo.Client) {
+	// Access the MongoDB collection
+	collection := client.Database("Currency_Exchange").Collection("exchange_rates")
+
+	// Define an empty filter to delete all documents
+	filter := bson.M{}
+
+	// Perform the deletion operation
+	result, err := collection.DeleteMany(context.TODO(), filter)
+	if err != nil {
+		log.Printf("Error deleting documents: %s\n", err.Error())
+		return
+	}
+
+	// Display the number of deleted documents
+	fmt.Printf("Deleted %d documents\n", result.DeletedCount)
+}
+
+
 func main() {
 	apiKey := "eeaef8a22a3a7f5998cbd83ecc2fed292698ed28d7adc154738957c8d269a81d"
 	// fetchExchangeRates(apiKey)
@@ -200,23 +263,28 @@ func main() {
 	}
 	defer client.Disconnect(context.TODO())
 
+	deleteAllRecords(client)
+
 	fetchExchangeRates(apiKey, client)
 
-	duration := 5 * time.Minute // Update interval of 5 minutes
+	retrieveExchangeRatesFromDB(client)
 
-	// Set up a ticker to trigger updates at specified intervals
-	ticker := time.NewTicker(duration)
-	defer ticker.Stop()
 
-	// Run the update process in a separate goroutine
-	go func() {
-		for range ticker.C {
-			fetchExchangeRates(apiKey, client)
-		}
-	}()
+	// duration := 5 * time.Minute // Update interval of 5 minutes
 
-	// Keep the main goroutine running
-	select {}
+	// // Set up a ticker to trigger updates at specified intervals
+	// ticker := time.NewTicker(duration)
+	// defer ticker.Stop()
+
+	// // Run the update process in a separate goroutine
+	// go func() {
+	// 	for range ticker.C {
+	// 		fetchExchangeRates(apiKey, client)
+	// 	}
+	// }()
+
+	// // Keep the main goroutine running
+	// select {}
 
 
 }
