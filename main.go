@@ -1,10 +1,17 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
-    "fmt"
-    "github.com/go-resty/resty/v2"
+	"fmt"
+	"log"
 	"time"
+
+	"github.com/go-resty/resty/v2"
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
+	"go.mongodb.org/mongo-driver/bson/primitive"
+
 )
 
 type ExchangeRateResponse struct {
@@ -19,12 +26,46 @@ type ExchangeRate struct {
 	GBP float64 `json:"GBP"`
 }
 
+type ExchangeRateDB struct {
+	ID             primitive.ObjectID `bson:"_id,omitempty"`
+	Cryptocurrency string             `bson:"cryptocurrency"`
+	FiatCurrency   string             `bson:"fiat_currency"`
+	Rate           float64            `bson:"rate"`
+	Timestamp      time.Time          `bson:"timestamp"`
+}
 
-func processExchangeRates(responseBody string) {
+func connectMongoDB() (*mongo.Client, error) {
+	// Set up MongoDB connection options
+	clientOptions := options.Client().ApplyURI("mongodb+srv://achhayapathak:achhaya@cluster0.syfn4ue.mongodb.net/Currency_Exchange?retryWrites=true&w=majority")
+	
+	// Connect to MongoDB
+	client, err := mongo.Connect(context.TODO(), clientOptions)
+	if err != nil {
+		return nil, fmt.Errorf("failed to connect to MongoDB: %v", err)
+	}
+
+	// Ping the MongoDB server to ensure the connection is valid
+	err = client.Ping(context.TODO(), nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to ping MongoDB server: %v", err)
+	}
+
+	return client, nil
+}
+
+
+func processExchangeRates(responseBody string, client *mongo.Client) {
 	var exchangeRateResponse ExchangeRateResponse
 	err := json.Unmarshal([]byte(responseBody), &exchangeRateResponse)
 	if err != nil {
 		fmt.Printf("Error parsing API response: %s\n", err.Error())
+		return
+	}
+
+	// Insert exchange rate data into MongoDB
+	err = insertExchangeRateData(client, exchangeRateResponse)
+	if err != nil {
+		log.Printf("Error inserting exchange rate data: %s\n", err.Error())
 		return
 	}
 
@@ -43,43 +84,125 @@ func processExchangeRates(responseBody string) {
 }
 
 
-func fetchExchangeRates(apiKey string) {
-    // Create a new HTTP client
-    client := resty.New()
+func insertExchangeRateData(client *mongo.Client, exchangeRateResponse ExchangeRateResponse) error {
+	// Access the MongoDB collection
+	collection := client.Database("Currency_Exchange").Collection("exchange_rates")
 
-    // Set the API key in the request header
-    client.SetHeader("Authorization", "Apikey "+apiKey)
+	// Prepare the exchange rate data for insertion
+	exchangeRates := []ExchangeRateDB{
+		{
+			Cryptocurrency: "BTC",
+			FiatCurrency:   "USD",
+			Rate:           exchangeRateResponse.BTC.USD,
+			Timestamp:      time.Now(),
+		},
+		{
+			Cryptocurrency: "BTC",
+			FiatCurrency:   "EUR",
+			Rate:           exchangeRateResponse.BTC.EUR,
+			Timestamp:      time.Now(),
+		},
+		{
+			Cryptocurrency: "BTC",
+			FiatCurrency:   "GBP",
+			Rate:           exchangeRateResponse.BTC.GBP,
+			Timestamp:      time.Now(),
+		},
+		{
+			Cryptocurrency: "ETH",
+			FiatCurrency:   "USD",
+			Rate:           exchangeRateResponse.ETH.USD,
+			Timestamp:      time.Now(),
+		},
+		{
+			Cryptocurrency: "ETH",
+			FiatCurrency:   "EUR",
+			Rate:           exchangeRateResponse.ETH.EUR,
+			Timestamp:      time.Now(),
+		},
+		{
+			Cryptocurrency: "ETH",
+			FiatCurrency:   "GBP",
+			Rate:           exchangeRateResponse.ETH.GBP,
+			Timestamp:      time.Now(),
+		},
+		{
+			Cryptocurrency: "LTC",
+			FiatCurrency:   "USD",
+			Rate:           exchangeRateResponse.LTC.USD,
+			Timestamp:      time.Now(),
+		},
+		{
+			Cryptocurrency: "LTC",
+			FiatCurrency:   "EUR",
+			Rate:           exchangeRateResponse.LTC.EUR,
+			Timestamp:      time.Now(),
+		},
+		{
+			Cryptocurrency: "LTC",
+			FiatCurrency:   "GBP",
+			Rate:           exchangeRateResponse.LTC.GBP,
+			Timestamp:      time.Now(),
+		},
+	}
 
-    // Make the API request to fetch exchange rates
-    response, err := client.R().
-        Get("https://min-api.cryptocompare.com/data/pricemulti?fsyms=BTC,ETH,LTC&tsyms=USD,EUR,GBP")
+	// Insert the exchange rate data into the collection
+	var exchangeRatesInterface []interface{}
+	for _, rate := range exchangeRates {
+		exchangeRatesInterface = append(exchangeRatesInterface, rate)
+	}
+	_, err := collection.InsertMany(context.TODO(), exchangeRatesInterface)
 
-    if err != nil {
-        fmt.Printf("Error making API request: %s\n", err.Error())
-        return
-    }
+	if err != nil {
+		return fmt.Errorf("failed to insert exchange rate data: %v", err)
+	}
 
-    // Check the response status code
-    if response.StatusCode() == 200 {
-        // Parse and process the response here
-        fmt.Println("Exchange rates fetched successfully!")
-        // fmt.Println("Response Body:", response.String())
-		processExchangeRates(response.String())
+	return nil
+}
 
-    } else {
-        // Handle the error scenario here
-        fmt.Printf("API request failed with status code: %d\n", response.StatusCode())
-    }
+
+func fetchExchangeRates(apiKey string, client *mongo.Client) {
+	// Create a new HTTP client
+	client1 := resty.New()
+
+	// Set the API key in the request header
+	client1.SetHeader("Authorization", "Apikey "+apiKey)
+
+	// Make the API request to fetch exchange rates
+	response, err := client1.R().
+		Get("https://min-api.cryptocompare.com/data/pricemulti?fsyms=BTC,ETH,LTC&tsyms=USD,EUR,GBP")
+
+	if err != nil {
+		log.Printf("Error making API request: %s\n", err.Error())
+		return
+	}
+
+	// Check the response status code
+	if response.StatusCode() == 200 {
+		// Parse and process the response here
+		fmt.Println("Exchange rates fetched successfully!")
+		// fmt.Println("Response Body:", response.String())
+		processExchangeRates(response.String(), client)
+	} else {
+		// Handle the error scenario here
+		log.Printf("API request failed with status code: %d\n", response.StatusCode())
+	}
 }
 
 func main() {
 	apiKey := "eeaef8a22a3a7f5998cbd83ecc2fed292698ed28d7adc154738957c8d269a81d"
-	fetchExchangeRates(apiKey)
+	// fetchExchangeRates(apiKey)
+
+	// Connect to MongoDB
+	client, err := connectMongoDB()
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer client.Disconnect(context.TODO())
+
+	fetchExchangeRates(apiKey, client)
 
 	duration := 5 * time.Minute // Update interval of 5 minutes
-
-	// Start the initial data fetch
-	fetchExchangeRates(apiKey)
 
 	// Set up a ticker to trigger updates at specified intervals
 	ticker := time.NewTicker(duration)
@@ -88,10 +211,12 @@ func main() {
 	// Run the update process in a separate goroutine
 	go func() {
 		for range ticker.C {
-			fetchExchangeRates(apiKey)
+			fetchExchangeRates(apiKey, client)
 		}
 	}()
 
 	// Keep the main goroutine running
 	select {}
+
+
 }
