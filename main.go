@@ -1,18 +1,19 @@
 package main
 
 import (
+	"backendProject/router"
 	"context"
 	"encoding/json"
 	"fmt"
 	"log"
 	"time"
+	"net/http"
 
 	"github.com/go-resty/resty/v2"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
-
+	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type ExchangeRateResponse struct {
@@ -38,7 +39,7 @@ type ExchangeRateDB struct {
 func connectMongoDB() (*mongo.Client, error) {
 	// Set up MongoDB connection options
 	clientOptions := options.Client().ApplyURI("mongodb+srv://achhayapathak:achhaya@cluster0.syfn4ue.mongodb.net/Currency_Exchange?retryWrites=true&w=majority")
-	
+
 	// Connect to MongoDB
 	client, err := mongo.Connect(context.TODO(), clientOptions)
 	if err != nil {
@@ -53,7 +54,6 @@ func connectMongoDB() (*mongo.Client, error) {
 
 	return client, nil
 }
-
 
 func processExchangeRates(responseBody string, client *mongo.Client) {
 	var exchangeRateResponse ExchangeRateResponse
@@ -83,7 +83,6 @@ func processExchangeRates(responseBody string, client *mongo.Client) {
 	fmt.Printf("LTC to GBP: %.2f\n", exchangeRateResponse.LTC.GBP)
 	fmt.Println("-----------------------------------")
 }
-
 
 func insertExchangeRateData(client *mongo.Client, exchangeRateResponse ExchangeRateResponse) error {
 	// Access the MongoDB collection
@@ -161,7 +160,6 @@ func insertExchangeRateData(client *mongo.Client, exchangeRateResponse ExchangeR
 	return nil
 }
 
-
 func fetchExchangeRates(apiKey string, client *mongo.Client) {
 	// Create a new HTTP client
 	client1 := resty.New()
@@ -189,7 +187,6 @@ func fetchExchangeRates(apiKey string, client *mongo.Client) {
 		log.Printf("API request failed with status code: %d\n", response.StatusCode())
 	}
 }
-
 
 func retrieveExchangeRatesFromDB(client *mongo.Client) {
 	// Access the MongoDB collection
@@ -251,10 +248,8 @@ func deleteAllRecords(client *mongo.Client) {
 	fmt.Printf("Deleted %d documents\n", result.DeletedCount)
 }
 
-
 func main() {
 	apiKey := "eeaef8a22a3a7f5998cbd83ecc2fed292698ed28d7adc154738957c8d269a81d"
-	// fetchExchangeRates(apiKey)
 
 	// Connect to MongoDB
 	client, err := connectMongoDB()
@@ -269,22 +264,29 @@ func main() {
 
 	retrieveExchangeRatesFromDB(client)
 
+	r := router.SetupRouter()
 
-	// duration := 5 * time.Minute // Update interval of 5 minutes
+	log.Println("Server started on http://localhost:4000")
+	
+	// Start the server in a separate goroutine
+	go func() {
+		log.Fatal(http.ListenAndServe(":4000", r))
+	}()
 
-	// // Set up a ticker to trigger updates at specified intervals
-	// ticker := time.NewTicker(duration)
-	// defer ticker.Stop()
+	duration := 5 * time.Minute // Update interval of 5 minutes
 
-	// // Run the update process in a separate goroutine
-	// go func() {
-	// 	for range ticker.C {
-	// 		fetchExchangeRates(apiKey, client)
-	// 	}
-	// }()
+	// Set up a ticker to trigger updates at specified intervals
+	ticker := time.NewTicker(duration)
+	defer ticker.Stop()
 
-	// // Keep the main goroutine running
-	// select {}
+	// Run the update process in a separate goroutine
+	go func() {
+		for range ticker.C {
+			fetchExchangeRates(apiKey, client)
+		}
+	}()
 
+	// Keep the main goroutine running
+	select {}
 
 }
