@@ -17,6 +17,7 @@ import (
 )
 
 func main() {
+	// cryptocompare API key, should be in .env file
 	apiKey := "eeaef8a22a3a7f5998cbd83ecc2fed292698ed28d7adc154738957c8d269a81d"
 
 	// Connect to MongoDB
@@ -26,10 +27,15 @@ func main() {
 	}
 	defer client.Disconnect(context.TODO())
 
+	// function to delete existing records in database
 	deleteAllRecords(client)
 
+	// The fetchExchangeRates function is responsible for making the API request 
+	// to fetch the exchange rates and handling the response and any potential errors.
 	fetchExchangeRates(apiKey, client)
 
+	// The retrieveExchangeRatesFromDB function retrieves all the exchange rate documents
+	// from the MongoDB collection and displays the same.
 	retrieveExchangeRatesFromDB(client)
 
 	router := router.SetupRouter()
@@ -41,6 +47,7 @@ func main() {
 		log.Fatal(http.ListenAndServe(":8080", router))
 	}()
 
+	// this code sets up a ticker to trigger updates at a specified interval
 	duration := 5 * time.Minute // Update interval of 5 minutes
 
 	// Set up a ticker to trigger updates at specified intervals
@@ -57,19 +64,21 @@ func main() {
 	// Keep the main goroutine running
 	select {}
 
+
 }
 
-
-type ExchangeRateResponse struct {
-	BTC ExchangeRate `json:"BTC"`
-	ETH ExchangeRate `json:"ETH"`
-	LTC ExchangeRate `json:"LTC"`
-}
-
+// Exchange rate for a particular cryptocurrency
 type ExchangeRate struct {
 	USD float64 `json:"USD"`
 	EUR float64 `json:"EUR"`
 	GBP float64 `json:"GBP"`
+}
+
+// Cryptocurrencies
+type ExchangeRateResponse struct {
+	BTC ExchangeRate `json:"BTC"`
+	ETH ExchangeRate `json:"ETH"`
+	LTC ExchangeRate `json:"LTC"`
 }
 
 type ExchangeRateDB struct {
@@ -81,8 +90,11 @@ type ExchangeRateDB struct {
 }
 
 func connectMongoDB() (*mongo.Client, error) {
+	// This uri should be in .env file
+	uri := "mongodb+srv://achhayapathak:achhaya@cluster0.syfn4ue.mongodb.net/Currency_Exchange?retryWrites=true&w=majority"
+
 	// Set up MongoDB connection options
-	clientOptions := options.Client().ApplyURI("mongodb+srv://achhayapathak:achhaya@cluster0.syfn4ue.mongodb.net/Currency_Exchange?retryWrites=true&w=majority")
+	clientOptions := options.Client().ApplyURI(uri)
 
 	// Connect to MongoDB
 	client, err := mongo.Connect(context.TODO(), clientOptions)
@@ -107,7 +119,8 @@ func processExchangeRates(responseBody string, client *mongo.Client) {
 		return
 	}
 
-	// Insert exchange rate data into MongoDB
+	// The insertExchangeRateData function is responsible for preparing and inserting 
+	// the exchange rate data received from the API response into the MongoDB collection.
 	err = insertExchangeRateData(client, exchangeRateResponse)
 	if err != nil {
 		log.Printf("Error inserting exchange rate data: %s\n", err.Error())
@@ -127,6 +140,7 @@ func processExchangeRates(responseBody string, client *mongo.Client) {
 	fmt.Printf("LTC to GBP: %.2f\n", exchangeRateResponse.LTC.GBP)
 	fmt.Println("-----------------------------------")
 }
+
 
 func insertExchangeRateData(client *mongo.Client, exchangeRateResponse ExchangeRateResponse) error {
 	// Access the MongoDB collection
@@ -224,7 +238,6 @@ func fetchExchangeRates(apiKey string, client *mongo.Client) {
 	if response.StatusCode() == 200 {
 		// Parse and process the response here
 		fmt.Println("Exchange rates fetched successfully!")
-		// fmt.Println("Response Body:", response.String())
 		processExchangeRates(response.String(), client)
 	} else {
 		// Handle the error scenario here
