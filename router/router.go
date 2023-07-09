@@ -319,13 +319,13 @@ func handleGetExchangeRateHistory(w http.ResponseWriter, r *http.Request) {
 
 
 func GetAddressBalance(address string) (string, error) {
-	// This uri should be in the .env file
-	// const uri = "https://mainnet.infura.io/v3/b1dadae5820b42779880f74796d5b1c2"
+	
 	err := godotenv.Load()
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}
 
+	// Using Infura's API to extract balance from an address
 	uri := os.Getenv("INFURA_URI")
 
 	client, err := ethclient.Dial(uri)

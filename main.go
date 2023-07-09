@@ -24,12 +24,12 @@ func main() {
 	if err != nil {
 		log.Fatal("Error loading .env file")
 	}
-	
-	apiKey := os.Getenv("API_KEY")
-	mongoURI := os.Getenv("MONGO_URI")
 
-	// // cryptocompare API key, should be in .env file
-	// apiKey := apiKey
+	// CryptoCompare API KEY
+	apiKey := os.Getenv("API_KEY")
+
+	// Database Connection URI
+	mongoURI := os.Getenv("MONGO_URI")
 
 	// Connect to MongoDB
 	client, err := connectMongoDB(mongoURI)
@@ -38,7 +38,7 @@ func main() {
 	}
 	defer client.Disconnect(context.TODO())
 
-	// function to delete existing records in database
+	// Function to delete existing records in database
 	deleteAllRecords(client)
 
 	// The fetchExchangeRates function is responsible for making the API request
@@ -100,8 +100,6 @@ type ExchangeRateDB struct {
 }
 
 func connectMongoDB(uri string) (*mongo.Client, error) {
-	// This uri should be in .env file
-	// uri := "mongodb+srv://achhayapathak:achhaya@cluster0.syfn4ue.mongodb.net/Currency_Exchange?retryWrites=true&w=majority"
 
 	// Set up MongoDB connection options
 	clientOptions := options.Client().ApplyURI(uri)

@@ -45,13 +45,41 @@ To run the API locally, follow these steps:
     go mod download
     ```
 
-3. Start the server:
+3. Database Setup:
+
+    1. Sign in to your MongoDB Atlas account or create a new account if you don't have one.
+
+    2. Create a new project and configure the security settings and network access as per your requirements.
+
+    3. Create a database named "Currency_Exchange".
+
+    4. Get the MongoDB connection URI provided by MongoDB Atlas for this database.
+
+    5. Set up the connection URI in the `.env` file. Follow the instructions in the [.env File Setup](#env-file-setup) section.
+
+4. Setup the environment variables:
+
+    1. Create a new file named `.env` in the root directory of the project.
+
+    2. Open the `.env` file and add the following lines:
+
+        ```bash
+        API_KEY=your_cryptocompare_api_key
+        MONGO_URI=your_mongo_connection_uri
+        INFURA_URI=your_infura_uri
+        ```
+
+        Replace <your_cryptocompare_api_key> with your actual CryptoCompare API key for fetching exchange rates.
+        Replace <your_mongo_connection_uri> with the MongoDB connection URI obtained in the previous step.
+        Replace <your_infura_uri> with your actual Infura URI for fetching balance from ethereum address.
+
+5. Start the server:
 
     ```bash
     go run main.go
     ```
 
-4. The API should now be running locally at `http://localhost:8080`.
+6. The API should now be running locally at `http://localhost:8080`.
 
 
 ## Deployment
