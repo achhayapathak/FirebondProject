@@ -69,9 +69,9 @@ To run the API locally, follow these steps:
         INFURA_URI=your_infura_uri
         ```
 
-        Replace <your_cryptocompare_api_key> with your actual CryptoCompare API key for fetching exchange rates.
-        Replace <your_mongo_connection_uri> with the MongoDB connection URI obtained in the previous step.
-        Replace <your_infura_uri> with your actual Infura URI for fetching balance from ethereum address.
+        Replace `<your_cryptocompare_api_key>` with your actual CryptoCompare API key for fetching exchange rates.
+        Replace `<your_mongo_connection_uri>` with the MongoDB connection URI obtained in the previous step.
+        Replace `<your_infura_uri>` with your actual Infura URI for fetching balance from ethereum address.
 
 5. Start the server:
 
