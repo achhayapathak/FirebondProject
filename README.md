@@ -4,12 +4,11 @@ This repository contains the code for the Backend Developer Assignment of the Fi
 
 ## Table of Contents
 
-- [Minimum Requirements](#minimum-requirements)
 - [Installation and Setup](#installation-and-setup)
 - [Deployment](#deployment)
 - [API Endpoints](#api-endpoints)
 
-## Minimum Requirements
+<!-- ## Minimum Requirements
 
 The assignment requires implementing the following features:
 
@@ -28,7 +27,7 @@ The assignment requires implementing the following features:
 
 5. **Error Handling and Validation:** Implement proper error handling and validation for request data. Return appropriate error messages for invalid requests and handle exceptions gracefully.
 
-6. **Testing:** Write unit and integration tests to verify the correctness of the API.
+6. **Testing:** Write unit and integration tests to verify the correctness of the API. -->
 
 ## Installation and Setup
 
@@ -96,9 +95,11 @@ You can access the deployed backend at [https://firebondproject.onrender.com/](h
 The following API endpoints are available:
 
 - `GET /rates/{cryptocurrency}/{fiat}`
-- `GET /rates/{cryptocurrency}`
-- `GET /rates`
 - `GET /rates/history/{cryptocurrency}/{fiat}`
+- `GET /rates/{cryptocurrency}`
+- `GET /history/rates/{cryptocurrency}`
+- `GET /rates`
+- `GET /history/rates`
 - `GET /balance/{address}`
 
 For any further questions or issues, please contact me at [achhayapathak11@gmail.com](mailto:achhayapathak11@gmail.com).
