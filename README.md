@@ -94,12 +94,12 @@ You can access the deployed backend at [https://firebondproject.onrender.com/](h
 
 The following API endpoints are available:
 
-- `GET /rates/{cryptocurrency}/{fiat}`
-- `GET /rates/history/{cryptocurrency}/{fiat}`
-- `GET /rates/{cryptocurrency}`
-- `GET /history/rates/{cryptocurrency}`
-- `GET /rates`
-- `GET /history/rates`
-- `GET /balance/{address}`
+- `GET /rates/{cryptocurrency}/{fiat}` : Returns the current exchange rate between the specified cryptocurrency and fiat currency.
+- `GET /rates/history/{cryptocurrency}/{fiat}` : Returns the exchange rate history between the specified cryptocurrency and fiat currency for the past 24 hours.
+- `GET /rates/{cryptocurrency}` : Returns the current exchange rates between the specified cryptocurrency and all supported fiat currencies.
+- `GET /history/rates/{cryptocurrency}` : Returns the exchange rate history between the specified cryptocurrency and all supported fiat currency for the past 24 hours.
+- `GET /rates` : Returns the current exchange rates for all supported cryptocurrency-fiat pairs.
+- `GET /history/rates` : Returns the exchange rate for all supported cryptocurrency-fiat pairs for the past 24 hours.
+- `GET /balance/{address}` : Returns the balance of the provided Ethereum Address.
 
 For any further questions or issues, please contact me at [achhayapathak11@gmail.com](mailto:achhayapathak11@gmail.com).
