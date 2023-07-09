@@ -62,7 +62,6 @@ func connectMongoDB() (*mongo.Client, error) {
 	return client, nil
 }
 
-
 func getCurrentExchangeRate(client *mongo.Client, cryptocurrency, fiat string) (*ExchangeRateDB, error) {
 	// Access the MongoDB collection
 	collection := client.Database("Currency_Exchange").Collection("exchange_rates")
@@ -197,7 +196,41 @@ func getExchangeRates(client *mongo.Client) ([]ExchangeRateDB, error) {
 	return exchangeRates, nil
 }
 
+func getExchangeRatesHistory(client *mongo.Client) ([]ExchangeRateDB, error) {
+	// Access the MongoDB collection
+	collection := client.Database("Currency_Exchange").Collection("exchange_rates")
 
+	// Calculate the start time for the past 24 hours
+	startTime := time.Now().Add(-24 * time.Hour)
+
+	// Build the query filter
+	filter := bson.D{
+		{Key: "timestamp", Value: bson.D{{Key: "$gte", Value: startTime}}},
+	}
+
+	// Find the exchange rate documents
+	cursor, err := collection.Find(context.TODO(), filter)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get exchange rates: %v", err)
+	}
+	defer cursor.Close(context.TODO())
+
+	// Iterate over the cursor and decode the documents
+	var exchangeRates []ExchangeRateDB
+	for cursor.Next(context.TODO()) {
+		var exchangeRate ExchangeRateDB
+		if err := cursor.Decode(&exchangeRate); err != nil {
+			return nil, fmt.Errorf("failed to decode exchange rate: %v", err)
+		}
+		exchangeRates = append(exchangeRates, exchangeRate)
+	}
+
+	if err := cursor.Err(); err != nil {
+		return nil, fmt.Errorf("cursor error: %v", err)
+	}
+
+	return exchangeRates, nil
+}
 
 func handleGetExchangeRate(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
@@ -299,6 +332,7 @@ func handleGetExchangeRatesByCryptocurrency(w http.ResponseWriter, r *http.Reque
 }
 
 func handleGetExchangeRates(w http.ResponseWriter, r *http.Request) {
+	fmt.Print("in rates")
 	client, err := connectMongoDB()
 	if err != nil {
 		log.Printf("Failed to connect to MongoDB: %v", err)
@@ -327,7 +361,35 @@ func handleGetExchangeRates(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
+func handleGetExchangeRatesHistory(w http.ResponseWriter, r *http.Request) {
+	fmt.Print("In history rates")
+	client, err := connectMongoDB()
+	if err != nil {
+		log.Printf("Failed to connect to MongoDB: %v", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+	defer client.Disconnect(context.TODO())
 
+	exchangeRates, err := getExchangeRatesHistory(client)
+	if err != nil {
+		log.Printf("Failed to get exchange rates: %v", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+		return
+	}
+
+	response := make([]ExchangeRateResponse, len(exchangeRates))
+	for i, exchangeRate := range exchangeRates {
+		response[i] = ExchangeRateResponse{
+			Cryptocurrency: exchangeRate.Cryptocurrency,
+			FiatCurrency:   exchangeRate.FiatCurrency,
+			Rate:           exchangeRate.Rate,
+		}
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(response)
+}
 
 func GetAddressBalance(address string) (string, error) {
 
@@ -367,7 +429,6 @@ func GetBalanceHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintf(w, "Balance of address %s: %s", address, balance)
 }
 
-
 func SetupRouter() *mux.Router {
 	r := mux.NewRouter()
 
@@ -375,6 +436,7 @@ func SetupRouter() *mux.Router {
 	r.HandleFunc("/rates/history/{cryptocurrency}/{fiat}", handleGetExchangeRateHistory).Methods("GET")
 	r.HandleFunc("/rates/{cryptocurrency}", handleGetExchangeRatesByCryptocurrency).Methods("GET")
 	r.HandleFunc("/rates", handleGetExchangeRates).Methods("GET")
+	r.HandleFunc("/history/rates", handleGetExchangeRatesHistory).Methods("GET")
 
 	r.HandleFunc("/balance/{address}", GetBalanceHandler).Methods("GET")
 
