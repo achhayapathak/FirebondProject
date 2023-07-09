@@ -7,9 +7,11 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"time"
 
 	"github.com/go-resty/resty/v2"
+	"github.com/joho/godotenv"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
@@ -17,11 +19,20 @@ import (
 )
 
 func main() {
-	// cryptocompare API key, should be in .env file
-	apiKey := "eeaef8a22a3a7f5998cbd83ecc2fed292698ed28d7adc154738957c8d269a81d"
+
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+	
+	apiKey := os.Getenv("API_KEY")
+	mongoURI := os.Getenv("MONGO_URI")
+
+	// // cryptocompare API key, should be in .env file
+	// apiKey := apiKey
 
 	// Connect to MongoDB
-	client, err := connectMongoDB()
+	client, err := connectMongoDB(mongoURI)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -30,7 +41,7 @@ func main() {
 	// function to delete existing records in database
 	deleteAllRecords(client)
 
-	// The fetchExchangeRates function is responsible for making the API request 
+	// The fetchExchangeRates function is responsible for making the API request
 	// to fetch the exchange rates and handling the response and any potential errors.
 	fetchExchangeRates(apiKey, client)
 
@@ -64,7 +75,6 @@ func main() {
 	// Keep the main goroutine running
 	select {}
 
-
 }
 
 // Exchange rate for a particular cryptocurrency
@@ -89,9 +99,9 @@ type ExchangeRateDB struct {
 	Timestamp      time.Time          `bson:"timestamp"`
 }
 
-func connectMongoDB() (*mongo.Client, error) {
+func connectMongoDB(uri string) (*mongo.Client, error) {
 	// This uri should be in .env file
-	uri := "mongodb+srv://achhayapathak:achhaya@cluster0.syfn4ue.mongodb.net/Currency_Exchange?retryWrites=true&w=majority"
+	// uri := "mongodb+srv://achhayapathak:achhaya@cluster0.syfn4ue.mongodb.net/Currency_Exchange?retryWrites=true&w=majority"
 
 	// Set up MongoDB connection options
 	clientOptions := options.Client().ApplyURI(uri)
@@ -119,7 +129,7 @@ func processExchangeRates(responseBody string, client *mongo.Client) {
 		return
 	}
 
-	// The insertExchangeRateData function is responsible for preparing and inserting 
+	// The insertExchangeRateData function is responsible for preparing and inserting
 	// the exchange rate data received from the API response into the MongoDB collection.
 	err = insertExchangeRateData(client, exchangeRateResponse)
 	if err != nil {
@@ -140,7 +150,6 @@ func processExchangeRates(responseBody string, client *mongo.Client) {
 	fmt.Printf("LTC to GBP: %.2f\n", exchangeRateResponse.LTC.GBP)
 	fmt.Println("-----------------------------------")
 }
-
 
 func insertExchangeRateData(client *mongo.Client, exchangeRateResponse ExchangeRateResponse) error {
 	// Access the MongoDB collection
@@ -304,5 +313,3 @@ func deleteAllRecords(client *mongo.Client) {
 	// Display the number of deleted documents
 	fmt.Printf("Deleted %d documents\n", result.DeletedCount)
 }
-
-

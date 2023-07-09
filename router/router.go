@@ -6,14 +6,16 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	"time"
+
+	"github.com/joho/godotenv"
 
 	"github.com/gorilla/mux"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -38,7 +40,14 @@ type ExchangeRateDB struct {
 
 func connectMongoDB() (*mongo.Client, error) {
 	// MongoDB connection options
-	clientOptions := options.Client().ApplyURI("mongodb+srv://achhayapathak:achhaya@cluster0.syfn4ue.mongodb.net/Currency_Exchange?retryWrites=true&w=majority")
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+
+	mongoURI := os.Getenv("MONGO_URI")
+
+	clientOptions := options.Client().ApplyURI(mongoURI)
 
 	// Connect to MongoDB
 	client, err := mongo.Connect(context.TODO(), clientOptions)
@@ -177,6 +186,8 @@ func getExchangeRateHistory(client *mongo.Client, cryptocurrency, fiat string) (
 	return exchangeRates, nil
 }
 
+
+
 func handleGetExchangeRate(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	cryptocurrency := vars["cryptocurrency"]
@@ -308,7 +319,16 @@ func handleGetExchangeRateHistory(w http.ResponseWriter, r *http.Request) {
 
 
 func GetAddressBalance(address string) (string, error) {
-	client, err := ethclient.Dial("https://mainnet.infura.io/v3/b1dadae5820b42779880f74796d5b1c2")
+	// This uri should be in the .env file
+	// const uri = "https://mainnet.infura.io/v3/b1dadae5820b42779880f74796d5b1c2"
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+
+	uri := os.Getenv("INFURA_URI")
+
+	client, err := ethclient.Dial(uri)
 	if err != nil {
 	  return "", err
 	}
