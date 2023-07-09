@@ -94,6 +94,7 @@ You can access the deployed backend at [https://firebondproject.onrender.com/](h
 
 The following API endpoints are available:
 
+- `GET /` : Returns instructions for API endpoints.
 - `GET /rates/{cryptocurrency}/{fiat}` : Returns the current exchange rate between the specified cryptocurrency and fiat currency.
 - `GET /rates/history/{cryptocurrency}/{fiat}` : Returns the exchange rate history between the specified cryptocurrency and fiat currency for the past 24 hours.
 - `GET /rates/{cryptocurrency}` : Returns the current exchange rates between the specified cryptocurrency and all supported fiat currencies.
