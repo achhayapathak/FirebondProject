@@ -9,8 +9,6 @@ import (
 	"os"
 	"time"
 
-	"github.com/joho/godotenv"
-
 	"github.com/gorilla/mux"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -37,14 +35,9 @@ type ExchangeRateDB struct {
 }
 
 func connectMongoDB() (*mongo.Client, error) {
-	// MongoDB connection options
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
-
 	mongoURI := os.Getenv("MONGO_URI")
-
+	
+	// MongoDB connection options
 	clientOptions := options.Client().ApplyURI(mongoURI)
 
 	// Connect to MongoDB
@@ -460,11 +453,6 @@ func handleGetExchangeRatesHistory(w http.ResponseWriter, r *http.Request) {
 }
 
 func GetAddressBalance(address string) (string, error) {
-
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
 
 	// Using Infura's API to extract balance from an address
 	uri := os.Getenv("INFURA_URI")

@@ -39,7 +39,7 @@ func main() {
 	defer client.Disconnect(context.TODO())
 
 	// Function to delete existing records in database
-	deleteAllRecords(client)
+	// deleteAllRecords(client)
 
 	// The fetchExchangeRates function is responsible for making the API request
 	// to fetch the exchange rates and handling the response and any potential errors.
@@ -51,11 +51,10 @@ func main() {
 
 	router := router.SetupRouter()
 
-	log.Println("Server started")
-
 	// Start the server in a separate goroutine
 	go func() {
 		log.Fatal(http.ListenAndServe(":8080", router))
+		log.Println("Server started")
 	}()
 
 	// this code sets up a ticker to trigger updates at a specified interval
