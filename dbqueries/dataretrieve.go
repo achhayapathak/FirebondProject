@@ -1,4 +1,4 @@
-package dataretrieve
+package dbqueries
 
 import (
 	"context"

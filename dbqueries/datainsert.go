@@ -1,4 +1,4 @@
-package datainsert
+package dbqueries
 
 import (
 	"context"
@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/go-resty/resty/v2"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -24,13 +23,6 @@ type ExchangeRateResponse struct {
 	LTC ExchangeRate `json:"LTC"`
 }
 
-type ExchangeRateDB struct {
-	ID             primitive.ObjectID `bson:"_id,omitempty"`
-	Cryptocurrency string             `bson:"cryptocurrency"`
-	FiatCurrency   string             `bson:"fiat_currency"`
-	Rate           float64            `bson:"rate"`
-	Timestamp      time.Time          `bson:"timestamp"`
-}
 
 func processExchangeRates(responseBody string, client *mongo.Client) {
 	var exchangeRateResponse ExchangeRateResponse

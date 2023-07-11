@@ -1,9 +1,7 @@
 package main
 
 import (
-	"backendProject/dbqueries/datainsert"
-	"backendProject/dbqueries/dataretrieve"
-	"backendProject/dbqueries/dbconnection"
+	"backendProject/dbqueries"
 	"backendProject/router"
 	"context"
 	"log"
@@ -25,7 +23,7 @@ func main() {
 	apiKey := os.Getenv("API_KEY")
 
 	// Connect to MongoDB
-	client, err := dbconnection.ConnectMongoDB()
+	client, err := dbqueries.ConnectMongoDB()
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -33,11 +31,11 @@ func main() {
 
 	// The fetchExchangeRates function is responsible for making the API request
 	// to fetch the exchange rates and handling the response and any potential errors.
-	datainsert.FetchExchangeRates(apiKey, client)
+	dbqueries.FetchExchangeRates(apiKey, client)
 
 	// The retrieveExchangeRatesFromDB function retrieves all the exchange rate documents
 	// from the MongoDB collection and displays the same.
-	dataretrieve.RetrieveExchangeRatesFromDB(client)
+	dbqueries.RetrieveExchangeRatesFromDB(client)
 
 	router := router.SetupRouter()
 
@@ -57,7 +55,7 @@ func main() {
 	// Run the update process in a separate goroutine
 	go func() {
 		for range ticker.C {
-			datainsert.FetchExchangeRates(apiKey, client)
+			dbqueries.FetchExchangeRates(apiKey, client)
 		}
 	}()
 

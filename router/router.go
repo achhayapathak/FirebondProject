@@ -1,6 +1,7 @@
 package router
 
 import (
+	"backendProject/dbqueries"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -13,7 +14,6 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -32,27 +32,6 @@ type ExchangeRateDB struct {
 	FiatCurrency   string             `bson:"fiat_currency"`
 	Rate           float64            `bson:"rate"`
 	Timestamp      time.Time          `bson:"timestamp"`
-}
-
-func connectMongoDB() (*mongo.Client, error) {
-	mongoURI := os.Getenv("MONGO_URI")
-	
-	// MongoDB connection options
-	clientOptions := options.Client().ApplyURI(mongoURI)
-
-	// Connect to MongoDB
-	client, err := mongo.Connect(context.TODO(), clientOptions)
-	if err != nil {
-		return nil, fmt.Errorf("failed to connect to MongoDB: %v", err)
-	}
-
-	// Ping the MongoDB server to ensure the connection is valid
-	err = client.Ping(context.TODO(), nil)
-	if err != nil {
-		return nil, fmt.Errorf("failed to ping MongoDB server: %v", err)
-	}
-
-	return client, nil
 }
 
 func getCurrentExchangeRate(client *mongo.Client, cryptocurrency, fiat string) (*ExchangeRateDB, error) {
@@ -267,7 +246,7 @@ func handleGetExchangeRate(w http.ResponseWriter, r *http.Request) {
 	cryptocurrency := vars["cryptocurrency"]
 	fiat := vars["fiat"]
 
-	client, err := connectMongoDB()
+	client, err := dbqueries.ConnectMongoDB()
 	if err != nil {
 		log.Printf("Failed to connect to MongoDB: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -301,7 +280,7 @@ func handleGetExchangeRateHistory(w http.ResponseWriter, r *http.Request) {
 	cryptocurrency := vars["cryptocurrency"]
 	fiat := vars["fiat"]
 
-	client, err := connectMongoDB()
+	client, err := dbqueries.ConnectMongoDB()
 	if err != nil {
 		log.Printf("Failed to connect to MongoDB: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -333,7 +312,7 @@ func handleGetExchangeRatesByCryptocurrency(w http.ResponseWriter, r *http.Reque
 	vars := mux.Vars(r)
 	cryptocurrency := vars["cryptocurrency"]
 
-	client, err := connectMongoDB()
+	client, err := dbqueries.ConnectMongoDB()
 	if err != nil {
 		log.Printf("Failed to connect to MongoDB: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -365,7 +344,7 @@ func handleGetExchangeRatesByCryptocurrencyHistory(w http.ResponseWriter, r *htt
 	vars := mux.Vars(r)
 	cryptocurrency := vars["cryptocurrency"]
 
-	client, err := connectMongoDB()
+	client, err := dbqueries.ConnectMongoDB()
 	if err != nil {
 		log.Printf("Failed to connect to MongoDB: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -395,7 +374,7 @@ func handleGetExchangeRatesByCryptocurrencyHistory(w http.ResponseWriter, r *htt
 }
 
 func handleGetExchangeRates(w http.ResponseWriter, r *http.Request) {
-	client, err := connectMongoDB()
+	client, err := dbqueries.ConnectMongoDB()
 	if err != nil {
 		log.Printf("Failed to connect to MongoDB: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
@@ -424,7 +403,7 @@ func handleGetExchangeRates(w http.ResponseWriter, r *http.Request) {
 }
 
 func handleGetExchangeRatesHistory(w http.ResponseWriter, r *http.Request) {
-	client, err := connectMongoDB()
+	client, err := dbqueries.ConnectMongoDB()
 	if err != nil {
 		log.Printf("Failed to connect to MongoDB: %v", err)
 		http.Error(w, "Internal Server Error", http.StatusInternalServerError)

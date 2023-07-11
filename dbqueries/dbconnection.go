@@ -1,4 +1,4 @@
-package dbconnection
+package dbqueries
 
 import (
 	"context"
